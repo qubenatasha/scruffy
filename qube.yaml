@@ -1,0 +1,49 @@
+id: 54eab077-60f3-4760-b073-6062aab1aa34
+name: Scruffy
+apptype: api
+language: python
+toolchain:
+  id: 58dd8026c3817b001eb2102e
+  name: my-python-tools-2
+opinion:
+  id: 58dd80285d757d000b5c56e2
+  name: name str
+endpoint:
+  id: 58e3ed3f2a0603000b3e58a7
+  name: Qubeship Sandbox Cluster
+  type: target
+pipeline: build_bake_test_deployment:v0.1
+security:
+  keys_loc: "conf/"
+notification:
+  type: slack
+  domain: 
+  channel: qubeship
+build:
+  image:
+    name: python:3-onbuild
+    onbuild:
+      - pip install tox wheel && pip list && tox && python setup.py bdist_wheel
+  publish_artifact: dist/
+  lint: true
+bake:
+  strategy: docker
+  script: Dockerfile
+  repositories:
+    - name: google
+      prefix: gcr.io/qubeship-partners
+      type: gcr
+test:
+  skip: true
+  functional:
+    provider: qubeship-sg
+deployment:
+  skip: false
+  continuous_deployment: true
+  service_name: scruffy
+  environments:
+    prod:
+      - type: qubeship_managed
+        id: 58e3ed3f2a0603000b3e58a7
+        template_id: qube_external_app_v1
+        srcRepo: google
